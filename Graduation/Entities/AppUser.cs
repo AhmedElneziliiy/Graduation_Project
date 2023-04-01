@@ -13,5 +13,9 @@ namespace Graduation.Entities
         public string City { get; set; }
         public string Country { get; set; }
         public ICollection<AppUserRole> UserRoles { get; set; }
+
+
+        public List<Message> MessagesSent { get; set; }
+        public List<Message> MessagesReceived { get; set; }
     }
 }
