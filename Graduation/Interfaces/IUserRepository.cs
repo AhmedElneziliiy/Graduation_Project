@@ -11,6 +11,7 @@ namespace Graduation.Interfaces
         Task<AppUser> GetUserByIdAsync(int id);
         Task<AppUser> GetUserByUsernameAsync(string username);
         Task<IEnumerable<MemberDto>> GetMembersAsync();
+        //Task<IEnumerable<AppUser>> GetMembersAsync();
         Task<MemberDto> GetMemberAsync(string username);
     }
 }

@@ -1,6 +1,7 @@
 using Graduation.Data;
 using Graduation.Entities;
 using Graduation.Extensions;
+using Graduation.Middleware;
 using Graduation.SignalR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -19,12 +20,15 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+//Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<ExceptionMiddleware>();
+
 
 app.UseHttpsRedirection();
 
