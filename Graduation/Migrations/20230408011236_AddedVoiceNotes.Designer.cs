@@ -4,6 +4,7 @@ using Graduation.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Graduation.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20230408011236_AddedVoiceNotes")]
+    partial class AddedVoiceNotes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -138,7 +140,7 @@ namespace Graduation.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
-                    b.ToTable("Users", "security");
+                    b.ToTable("AspNetUsers", (string)null);
                 });
 
             modelBuilder.Entity("Graduation.Entities.AppUserRole", b =>
@@ -198,8 +200,8 @@ namespace Graduation.Migrations
                     b.Property<DateTime?>("DateRead")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("FileUrl")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<bool>("IsVoiceNote")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("MessageSent")
                         .HasColumnType("datetime2");
@@ -221,6 +223,9 @@ namespace Graduation.Migrations
 
                     b.Property<string>("SenderUsername")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("VoiceNote")
+                        .HasColumnType("varbinary(max)");
 
                     b.HasKey("Id");
 
@@ -258,25 +263,6 @@ namespace Graduation.Migrations
                     b.ToTable("Photos");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NormalizedName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Roles", "security");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.Property<int>("Id")
@@ -298,7 +284,7 @@ namespace Graduation.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("RoleClaims", "security");
+                    b.ToTable("AspNetRoleClaims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
@@ -322,7 +308,7 @@ namespace Graduation.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserClaims", "security");
+                    b.ToTable("AspNetUserClaims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
@@ -343,7 +329,7 @@ namespace Graduation.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserLogins", "security");
+                    b.ToTable("AspNetUserLogins", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
@@ -362,7 +348,7 @@ namespace Graduation.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("UserTokens", "security");
+                    b.ToTable("AspNetUserTokens", (string)null);
                 });
 
             modelBuilder.Entity("Graduation.Entities.AppUserRole", b =>

@@ -13,16 +13,22 @@ namespace Graduation.Controllers
         private readonly IUserRepository _userRepository;
         private readonly IMessageRepository _messageRepository;
         private readonly IMapper _mapper;
+        private readonly IPhotoService _photoService;
         public MessagesController(IUserRepository userRepository, IMessageRepository messageRepository,
-            IMapper mapper)
+            IMapper mapper, IPhotoService photoService)
         {
             _mapper = mapper;
             _messageRepository = messageRepository;
             _userRepository = userRepository;
+            _photoService = photoService;
         }
 
+
+
+
+
         [HttpPost]
-        public async Task<ActionResult<MessageDto>> CreateMessage(CreateMessageDto createMessageDto)
+        public async Task<ActionResult<MessageDto>> CreateMessage([FromForm]CreateMessageDto createMessageDto)
         {
             var username = User.GetUsername();
 
@@ -34,21 +40,76 @@ namespace Graduation.Controllers
 
             if (recipient == null) return NotFound();
 
-            var message = new Message
+            var message = new Message();
+
+            string fileUrl = null;
+
+
+            if (createMessageDto.File != null)
             {
-                Sender = sender,
-                Recipient = recipient,
-                SenderUsername = sender.UserName,
-                RecipientUsername = recipient.UserName,
-                Content = createMessageDto.Content
-            };
+                fileUrl = await _messageRepository.SaveFileAsync(createMessageDto.File);
+                if (fileUrl == null)
+                {
+                    return BadRequest("Failed to upload the file");
+                }
+                
+                message.FileUrl = fileUrl;                      // Set the uploaded file's URL;
+                
+            }
+
+              
+            
+                message.Sender = sender;
+                message.Recipient = recipient;
+                message.SenderUsername = sender.UserName;
+                //message.SenderUsername = "khaled";
+                message.RecipientUsername = recipient.UserName;
+                message.Content = createMessageDto.Content;
+               // message.FileUrl = fileUrl;                          // Set the uploaded file's URL
+            
 
             _messageRepository.AddMessage(message);
 
-            if (await _messageRepository.SaveAllAsync()) return Ok(_mapper.Map<MessageDto>(message));
+            if (await _messageRepository.SaveAllAsync())
+                return Ok(_mapper.Map<MessageDto>(message));
 
             return BadRequest("Failed to send message");
         }
+
+        //[HttpPost]
+        //public async Task<ActionResult<MessageDto>> CreateMessage([FromForm] CreateMessageDto createMessageDto)
+        //{
+
+
+        //    var username = User.GetUsername();
+
+        //    if (username == createMessageDto.RecipientUsername.ToLower())
+        //        return BadRequest("You cannot send messages to yourself");
+
+        //    var sender = await _userRepository.GetUserByUsernameAsync(username);
+        //    var recipient = await _userRepository.GetUserByUsernameAsync(createMessageDto.RecipientUsername);
+
+        //    if (recipient == null) return NotFound();
+
+
+
+        //    var message = new Message
+        //    {
+        //        Sender = sender,
+        //        Recipient = recipient,
+        //        SenderUsername = sender.UserName,
+        //        RecipientUsername = recipient.UserName,
+        //        Content = createMessageDto.Content,
+        //    };
+
+        //    _messageRepository.AddMessage(message);
+
+        //    if (await _messageRepository.SaveAllAsync()) 
+        //        return Ok(_mapper.Map<MessageDto>(message));
+
+
+        //    return BadRequest("Failed to send message");
+        //}
 
         [HttpGet]
         public async Task<ActionResult<PagedList<MessageDto>>> GetMessagesForUser([FromQuery]
@@ -67,10 +128,24 @@ namespace Graduation.Controllers
         [HttpGet("thread/{username}")]
         public async Task<ActionResult<IEnumerable<MessageDto>>> GetMessageThread(string username)
         {
-            var currentUsername = User.GetUsername();
 
+            var currentUsername = User.GetUsername();
+            //****************************************************
+            var x=await _userRepository.GetUserByUsernameAsync(username);
+            if (x == null)
+                return BadRequest("this username is not correct");
+            //*****************************************************
             return Ok(await _messageRepository.GetMessageThread(currentUsername, username));
         }
+
+        //[HttpGet("thread/{username}")]
+        //public async Task<ActionResult<IEnumerable<MessageDto>>> GetMessageThread(string username)
+        //{
+
+        //    //var currentUsername = User.GetUsername();
+
+        //    return Ok(await _messageRepository.GetMessageThread("khaled", username));
+        //}
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteMessage(int id)

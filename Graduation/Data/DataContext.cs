@@ -2,10 +2,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
-using System.Text.RegularExpressions;
 using Group = Graduation.Entities.Group;
 using Connection = Graduation.Entities.Connection;
+using System.Reflection.Emit;
 
 namespace Graduation.Data
 {
@@ -14,9 +13,7 @@ namespace Graduation.Data
         IdentityRoleClaim<int>, IdentityUserToken<int>>
     {
         public DataContext(DbContextOptions options) : base(options)
-        {
-
-        }
+        { }
 
 
         public DbSet<Message> Messages { get; set; }
@@ -49,6 +46,17 @@ namespace Graduation.Data
                 .HasOne(u => u.Sender)
                 .WithMany(m => m.MessagesSent)
                 .OnDelete(DeleteBehavior.Restrict);
+
+
+            #region Renaming
+            builder.Entity<AppUser>().ToTable("Users", "security");
+            builder.Entity<IdentityRole>().ToTable("Roles", "security");
+            //builder.Entity<IdentityUserRole<int>>().ToTable("UserRoles", "security"); 
+            builder.Entity<IdentityUserClaim<int>>().ToTable("UserClaims", "security"); 
+            builder.Entity<IdentityUserLogin<int>>().ToTable("UserLogins", "security");
+            builder.Entity<IdentityRoleClaim<int>>().ToTable("RoleClaims", "security");
+            builder.Entity<IdentityUserToken<int>>().ToTable("UserTokens", "security");
+            #endregion
         }
     }
 }

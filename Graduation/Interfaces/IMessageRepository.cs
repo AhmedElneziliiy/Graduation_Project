@@ -7,6 +7,9 @@ namespace Graduation.Interfaces
     public interface IMessageRepository
     {
         void AddMessage(Message message);
+        //-------------------
+        Task<string> SaveFileAsync(IFormFile file);
+
         void DeleteMessage(Message message);
         Task<Message> GetMessage(int id);
         Task<PagedList<MessageDto>> GetMessagesForUser(MessageParams messageParams);
@@ -17,5 +20,6 @@ namespace Graduation.Interfaces
         Task<Connection> GetConnection(string connectionId);
         Task<Group> GetMessageGroup(string groupName);
         Task<Group> GetGroupForConnection(string connectionId);
+
     }
 }

@@ -9,6 +9,7 @@ namespace Graduation.Services
     public class PhotoService: IPhotoService
     {
         private readonly Cloudinary _cloudinary;
+
         public PhotoService(IOptions<CloudinarySettings> config)
         {
             var acc = new Account
@@ -20,6 +21,8 @@ namespace Graduation.Services
 
             _cloudinary = new Cloudinary(acc);
         }
+
+       
         public async Task<ImageUploadResult> AddPhotoAsync(IFormFile file)
         {
             var uploadResult = new ImageUploadResult();
@@ -45,5 +48,9 @@ namespace Graduation.Services
 
             return await _cloudinary.DestroyAsync(deleteParams);
         }
+
+
+
+      
     }
 }

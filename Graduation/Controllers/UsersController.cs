@@ -4,10 +4,13 @@ using Graduation.DTOs;
 using Graduation.Entities;
 using Graduation.Extensions;
 using Graduation.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Graduation.Controllers
 {
+    [Authorize]
+
     public class UsersController:BaseApiController
     {
         private readonly IUserRepository _userRepository;

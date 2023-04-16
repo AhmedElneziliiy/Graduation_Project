@@ -6,17 +6,34 @@ using Microsoft.EntityFrameworkCore;
 using Graduation.Helpers;
 using Graduation.DTOs;
 
+using Microsoft.Extensions.Options;
+using Graduation.Services;
+
 namespace Graduation.Data
 {
     public class MessageRepository : IMessageRepository
     {
         private readonly DataContext _context;
         private readonly IMapper _mapper;
-        public MessageRepository(DataContext context, IMapper mapper)
+        private readonly IOptions<CloudinarySettings> _cloudinarySettings;
+
+        public MessageRepository(DataContext context, IMapper mapper, IOptions<CloudinarySettings> cloudinarySettings)
         {
             _mapper = mapper;
             _context = context;
+            _cloudinarySettings = cloudinarySettings;
+            
         }
+
+        //*****************************************************
+        public async Task<string> SaveFileAsync(IFormFile file)
+        {
+            var photoService = new PhotoService(_cloudinarySettings);
+            var uploadResult = await photoService.AddPhotoAsync(file);
+            return uploadResult?.SecureUrl?.AbsoluteUri;
+        }
+        //******************************************************
+
 
         public void AddGroup(Group group)
         {
