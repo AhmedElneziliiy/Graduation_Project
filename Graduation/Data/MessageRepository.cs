@@ -5,7 +5,6 @@ using Graduation.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Graduation.Helpers;
 using Graduation.DTOs;
-
 using Microsoft.Extensions.Options;
 using Graduation.Services;
 
@@ -29,9 +28,18 @@ namespace Graduation.Data
         public async Task<string> SaveFileAsync(IFormFile file)
         {
             var photoService = new PhotoService(_cloudinarySettings);
-            var uploadResult = await photoService.AddPhotoAsync(file);
+            var uploadResult = await photoService.AddOggFileAsync(file);
             return uploadResult?.SecureUrl?.AbsoluteUri;
         }
+        //----------------------------------------------------
+        //public async Task<string> SaveFileAsync(IFormFile file)
+        //{
+        //    var fileService = new FileService(_cloudinarySettings);
+        //    var uploadResult = await fileService.AddPhotoAsync(file);
+        //    return uploadResult?.SecureUrl?.AbsoluteUri;
+        //}
+
+
         //******************************************************
 
 

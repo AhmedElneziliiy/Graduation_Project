@@ -24,18 +24,16 @@ namespace Graduation.Controllers
         }
 
 
-
-
-
         [HttpPost]
-        public async Task<ActionResult<MessageDto>> CreateMessage([FromForm]CreateMessageDto createMessageDto)
+        public async Task<ActionResult<MessageDto>> CreateMessage([FromForm] CreateMessageDto createMessageDto)
         {
             var username = User.GetUsername();
 
             if (username == createMessageDto.RecipientUsername.ToLower())
                 return BadRequest("You cannot send messages to yourself");
 
-            var sender = await _userRepository.GetUserByUsernameAsync(username);
+            var sender = await _userRepository.GetUserByUsernameAsync("khaled");
+
             var recipient = await _userRepository.GetUserByUsernameAsync(createMessageDto.RecipientUsername);
 
             if (recipient == null) return NotFound();
@@ -52,21 +50,16 @@ namespace Graduation.Controllers
                 {
                     return BadRequest("Failed to upload the file");
                 }
-                
-                message.FileUrl = fileUrl;                      // Set the uploaded file's URL;
-                
-            }
 
-              
-            
-                message.Sender = sender;
-                message.Recipient = recipient;
-                message.SenderUsername = sender.UserName;
-                //message.SenderUsername = "khaled";
-                message.RecipientUsername = recipient.UserName;
-                message.Content = createMessageDto.Content;
-               // message.FileUrl = fileUrl;                          // Set the uploaded file's URL
-            
+                message.FileUrl = fileUrl;                      // Set the uploaded file's URL;
+
+            }
+            message.Sender = sender;
+            message.Recipient = recipient;
+            message.SenderUsername = sender.UserName;
+            message.RecipientUsername = recipient.UserName;
+            message.Content = createMessageDto.Content;
+
 
             _messageRepository.AddMessage(message);
 
@@ -75,6 +68,52 @@ namespace Graduation.Controllers
 
             return BadRequest("Failed to send message");
         }
+
+
+        //[HttpPost]
+        //public async Task<ActionResult<MessageDto>> CreateMessage([FromForm]CreateMessageDto createMessageDto)
+        //{
+        //    var username = User.GetUsername();
+
+        //    if (username == createMessageDto.RecipientUsername.ToLower())
+        //        return BadRequest("You cannot send messages to yourself");
+
+        //    var sender = await _userRepository.GetUserByUsernameAsync("khaled");
+
+        //    var recipient = await _userRepository.GetUserByUsernameAsync(createMessageDto.RecipientUsername);
+
+        //    if (recipient == null) return NotFound();
+
+        //    var message = new Message();
+
+        //    string fileUrl = null;
+
+
+        //    if (createMessageDto.File != null)
+        //    {
+        //        fileUrl = await _messageRepository.SaveFileAsync(createMessageDto.File);
+        //        if (fileUrl == null)
+        //        {
+        //            return BadRequest("Failed to upload the file");
+        //        }
+
+        //        message.FileUrl = fileUrl;                      // Set the uploaded file's URL;
+
+        //    } 
+        //     message.Sender = sender;
+        //     message.Recipient = recipient;
+        //     message.SenderUsername = sender.UserName;
+        //     message.RecipientUsername = recipient.UserName;
+        //     message.Content = createMessageDto.Content;
+
+
+        //    _messageRepository.AddMessage(message);
+
+        //    if (await _messageRepository.SaveAllAsync())
+        //        return Ok(_mapper.Map<MessageDto>(message));
+
+        //    return BadRequest("Failed to send message");
+        //}
 
         //[HttpPost]
         //public async Task<ActionResult<MessageDto>> CreateMessage([FromForm] CreateMessageDto createMessageDto)
@@ -170,5 +209,14 @@ namespace Graduation.Controllers
             return BadRequest("Problem deleting the message");
 
         }
+
+
+        //private async Task<string> GetFileExtension(IFormFile file)
+        //{
+        //    var extension = Path.GetExtension(file.FileName);
+        //    return extension;
+        //}
+        
+
     }
 }
