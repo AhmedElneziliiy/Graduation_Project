@@ -14,5 +14,6 @@
         public DateTime MessageSent { get; set; }
         //---------------------------------------
         public string FileUrl { get; set; }
+        //public string PhotoUrl { get; set; }
     }
 }

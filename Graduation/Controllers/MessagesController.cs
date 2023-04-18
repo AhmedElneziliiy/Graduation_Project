@@ -32,6 +32,7 @@ namespace Graduation.Controllers
             if (username == createMessageDto.RecipientUsername.ToLower())
                 return BadRequest("You cannot send messages to yourself");
 
+
             var sender = await _userRepository.GetUserByUsernameAsync("khaled");
 
             var recipient = await _userRepository.GetUserByUsernameAsync(createMessageDto.RecipientUsername);
@@ -40,18 +41,29 @@ namespace Graduation.Controllers
 
             var message = new Message();
 
+
             string fileUrl = null;
 
 
             if (createMessageDto.File != null)
             {
                 fileUrl = await _messageRepository.SaveFileAsync(createMessageDto.File);
+
                 if (fileUrl == null)
                 {
                     return BadRequest("Failed to upload the file");
                 }
+                //-------------------------------------------------------------تمام  
 
-                message.FileUrl = fileUrl;                      // Set the uploaded file's URL;
+                var extension = GetFileExtension(createMessageDto.File);
+                if (extension.Result.ToString().ToLower() == ".jpg"
+                    || extension.Result.ToString().ToLower() == ".png"
+                     || extension.Result.ToString().ToLower() == ".gif")
+                {
+                    message.PhotoUrl = fileUrl;
+                }
+                else
+                    message.FileUrl = fileUrl;
 
             }
             message.Sender = sender;
@@ -63,10 +75,28 @@ namespace Graduation.Controllers
 
             _messageRepository.AddMessage(message);
 
+            
+            if (message.FileUrl==null && message.PhotoUrl!=null)
+            {
+                var v=_mapper.Map<MessageDto>(message);
+                v.FileUrl = message.PhotoUrl;
+                if(await _messageRepository.SaveAllAsync())
+                    return Ok(v);
+
+            }
+
             if (await _messageRepository.SaveAllAsync())
+            {
                 return Ok(_mapper.Map<MessageDto>(message));
+            }
 
             return BadRequest("Failed to send message");
+        }
+
+        private async Task<string> GetFileExtension(IFormFile file)
+        {
+            var extension = Path.GetExtension(file.FileName);
+            return extension;
         }
 
 
@@ -211,12 +241,7 @@ namespace Graduation.Controllers
         }
 
 
-        //private async Task<string> GetFileExtension(IFormFile file)
-        //{
-        //    var extension = Path.GetExtension(file.FileName);
-        //    return extension;
-        //}
-        
+       
 
     }
 }

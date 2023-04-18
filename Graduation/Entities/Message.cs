@@ -16,6 +16,7 @@
         public bool SenderDeleted { get; set; }
         public bool RecipientDeleted { get; set; }
         //------------------------------------------
+        public string PhotoUrl { get; set; }
         public string FileUrl { get; set; }
     }
 }
