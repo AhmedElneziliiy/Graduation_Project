@@ -75,12 +75,12 @@ namespace Graduation.Controllers
 
             _messageRepository.AddMessage(message);
 
-            
-            if (message.FileUrl==null && message.PhotoUrl!=null)
+
+            if (message.FileUrl == null && message.PhotoUrl != null)
             {
-                var v=_mapper.Map<MessageDto>(message);
+                var v = _mapper.Map<MessageDto>(message);
                 v.FileUrl = message.PhotoUrl;
-                if(await _messageRepository.SaveAllAsync())
+                if (await _messageRepository.SaveAllAsync())
                     return Ok(v);
 
             }
@@ -93,11 +93,30 @@ namespace Graduation.Controllers
             return BadRequest("Failed to send message");
         }
 
-        private async Task<string> GetFileExtension(IFormFile file)
+
+        [HttpGet("gallery/{username}")]
+        public async Task<ActionResult<IEnumerable<string>>> GetGallery(string username)
         {
-            var extension = Path.GetExtension(file.FileName);
-            return extension;
+            var sender = await _userRepository.GetUserByUsernameAsync("khaled");
+            //****************************************************
+            var x = await _userRepository.GetUserByUsernameAsync(username);
+
+            var result= await _messageRepository.GetPhotoGallery(sender.UserName, x.UserName);
+
+            List<string> y = new List<string>();
+            foreach (var item in result)
+            {
+                if (item.PhotoUrl is not null)
+                {
+                    y.Add(item.PhotoUrl);
+                }
+            }
+
+            return Ok(y);
+
         }
+
+       
 
 
         //[HttpPost]
@@ -194,6 +213,8 @@ namespace Graduation.Controllers
             return messages;
         }
 
+
+
         [HttpGet("thread/{username}")]
         public async Task<ActionResult<IEnumerable<MessageDto>>> GetMessageThread(string username)
         {
@@ -241,7 +262,14 @@ namespace Graduation.Controllers
         }
 
 
-       
+
+
+        private async Task<string> GetFileExtension(IFormFile file)
+        {
+            var extension = Path.GetExtension(file.FileName);
+            return extension;
+        }
+
 
     }
 }

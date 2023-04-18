@@ -9,6 +9,7 @@ namespace Graduation.Interfaces
         void AddMessage(Message message);
         //-------------------
         Task<string> SaveFileAsync(IFormFile file);
+        Task<IEnumerable<GalleryDto>> GetPhotoGallery(string currentUserName, string recipientUserName);
 
         void DeleteMessage(Message message);
         Task<Message> GetMessage(int id);

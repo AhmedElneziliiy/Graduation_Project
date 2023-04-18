@@ -61,6 +61,71 @@ namespace Graduation.Data
         //******************************************************
 
 
+
+
+
+
+        public async Task<IEnumerable<GalleryDto>> GetPhotoGallery(string currentUserName, string recipientUserName)
+        {
+            var messages = await _context.Messages
+               .Include(u => u.Sender).ThenInclude(p => p.Photos)
+               .Include(u => u.Recipient).ThenInclude(p => p.Photos)
+               .Where(
+                   m => m.RecipientUsername == currentUserName && m.RecipientDeleted == false &&
+                   m.SenderUsername == recipientUserName ||
+                   m.RecipientUsername == recipientUserName && m.SenderDeleted == false &&
+                   m.SenderUsername == currentUserName
+               )
+               .OrderBy(m => m.MessageSent)
+               .ToListAsync();
+            var unreadMessages = messages.Where(m => m.DateRead == null
+                && m.RecipientUsername == currentUserName).ToList();
+
+            if (unreadMessages.Any())
+            {
+                foreach (var message in unreadMessages)
+                {
+                    message.DateRead = DateTime.UtcNow;
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
+            return _mapper.Map<IEnumerable<GalleryDto>>(messages);
+            
+
+        }
+
+        public async Task<IEnumerable<MessageDto>> GetMessageThread(string currentUserName, string recipientUserName)
+        {
+            var messages = await _context.Messages
+                .Include(u => u.Sender).ThenInclude(p => p.Photos)
+                .Include(u => u.Recipient).ThenInclude(p => p.Photos)
+                .Where(
+                    m => m.RecipientUsername == currentUserName && m.RecipientDeleted == false &&
+                    m.SenderUsername == recipientUserName ||
+                    m.RecipientUsername == recipientUserName && m.SenderDeleted == false &&
+                    m.SenderUsername == currentUserName
+                )
+                .OrderBy(m => m.MessageSent)
+                .ToListAsync();
+
+            var unreadMessages = messages.Where(m => m.DateRead == null
+                && m.RecipientUsername == currentUserName).ToList();
+
+            if (unreadMessages.Any())
+            {
+                foreach (var message in unreadMessages)
+                {
+                    message.DateRead = DateTime.UtcNow;
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
+            return _mapper.Map<IEnumerable<MessageDto>>(messages);
+        }
+
         public void AddGroup(Group group)
         {
             _context.Groups.Add(group);
@@ -123,35 +188,7 @@ namespace Graduation.Data
                 .CreateAsync(messages, messageParams.PageNumber, messageParams.PageSize);
         }
 
-        public async Task<IEnumerable<MessageDto>> GetMessageThread(string currentUserName, string recipientUserName)
-        {
-            var messages = await _context.Messages
-                .Include(u => u.Sender).ThenInclude(p => p.Photos)
-                .Include(u => u.Recipient).ThenInclude(p => p.Photos)
-                .Where(
-                    m => m.RecipientUsername == currentUserName && m.RecipientDeleted == false &&
-                    m.SenderUsername == recipientUserName ||
-                    m.RecipientUsername == recipientUserName && m.SenderDeleted == false &&
-                    m.SenderUsername == currentUserName
-                )
-                .OrderBy(m => m.MessageSent)
-                .ToListAsync();
-
-            var unreadMessages = messages.Where(m => m.DateRead == null
-                && m.RecipientUsername == currentUserName).ToList();
-
-            if (unreadMessages.Any())
-            {
-                foreach (var message in unreadMessages)
-                {
-                    message.DateRead = DateTime.UtcNow;
-                }
-
-                await _context.SaveChangesAsync();
-            }
-
-            return _mapper.Map<IEnumerable<MessageDto>>(messages);
-        }
+     
 
         public void RemoveConnection(Connection connection)
         {
@@ -169,5 +206,6 @@ namespace Graduation.Data
             return extension;
         }
 
+       
     }
 }
