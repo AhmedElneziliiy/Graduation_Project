@@ -68,7 +68,7 @@ namespace Graduation.Data
 
         }
 
-        public async Task<IEnumerable<MessageDto>> GetMessageThread(string currentUserName, string recipientUserName)
+        public async Task<IEnumerable<ThreadDto>> GetMessageThread(string currentUserName, string recipientUserName)
         {
             var messages = await _context.Messages
                 .Where(
@@ -78,7 +78,7 @@ namespace Graduation.Data
                     m.SenderUsername == currentUserName
                 )
                 .OrderBy(m => m.MessageSent)
-                .ProjectTo<MessageDto>(_mapper.ConfigurationProvider)
+                .ProjectTo<ThreadDto>(_mapper.ConfigurationProvider)
                 .ToListAsync();
 
             var unreadMessages = messages.Where(m => m.DateRead == null

@@ -30,6 +30,7 @@ namespace Graduation.Helpers
 
             CreateMap<GalleryDto, Message>().ReverseMap();
             CreateMap<GalleryDto, MessageDto>().ReverseMap();
+            CreateMap<ThreadDto, Message>().ReverseMap();
 
         }
     }

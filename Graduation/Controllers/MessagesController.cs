@@ -130,14 +130,14 @@ namespace Graduation.Controllers
         }
 
         [HttpGet("thread/{username}")]
-        public async Task<ActionResult<IEnumerable<MessageDto>>> GetMessageThread(string username)
+        public async Task<ActionResult<IEnumerable<ThreadDto>>> GetMessageThread(string username)
         {
 
             var currentUsername = User.GetUsername();
             var reciver=await _unitOfWork.UserRepository.GetUserByUsernameAsync(username.ToLower());
             if (reciver == null)
                 return NotFound("there is not user name with that name");
-            return Ok(await _unitOfWork.MessageRepository.GetMessageThread(currentUsername, username.ToLower()));
+            return Ok(await _unitOfWork.MessageRepository.GetMessageThread("khaled", username.ToLower()));
         }
 
         [HttpDelete("{id}")]

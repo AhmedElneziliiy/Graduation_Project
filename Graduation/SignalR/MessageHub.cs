@@ -55,21 +55,43 @@ namespace Graduation.SignalR
             var recipient = await _unitOfWork.UserRepository.GetUserByUsernameAsync(createMessageDto.RecipientUsername);
 
             if (recipient == null) throw new HubException("Not found user");
-
-            var message = new Message
+            //-----------------------------------------------------------------
+            var message = new Message();
+            string fileUrl = null;
+            if (createMessageDto.File != null)
             {
-                Sender = sender,
-                Recipient = recipient,
-                SenderUsername = sender.UserName,
-                RecipientUsername = recipient.UserName,
-                Content = createMessageDto.Content
-            };
+                fileUrl = await _unitOfWork.MessageRepository.SaveFileAsync(createMessageDto.File);
 
+                if (fileUrl == null)
+                {
+                    throw new HubException("Failed to upload the file");
+                }
+
+                var extension = _unitOfWork.MessageRepository.GetFileExtension(createMessageDto.File);
+
+                if (extension.ToString().ToLower() == ".jpg"
+                    || extension.ToString().ToLower() == ".png"
+                     || extension.ToString().ToLower() == ".gif")
+                {
+                    message.PhotoUrl = fileUrl;
+                }
+                else
+                {
+                    message.FileUrl = fileUrl;
+                }
+
+            }
+            message.Sender = sender;
+            message.Recipient = recipient;
+            message.SenderUsername = sender.UserName;
+            message.RecipientUsername = recipient.UserName;
+            message.Content = createMessageDto.Content;
+
+           
+            //--------------------------------------------------------------------------------
 
             var groupName = GetGroupName(sender.UserName, recipient.UserName);
-
             var group = await _unitOfWork.MessageRepository.GetMessageGroup(groupName);
-
             if (group.Connections.Any(x => x.Username == recipient.UserName))
             {
                 message.DateRead = DateTime.UtcNow;
@@ -88,7 +110,16 @@ namespace Graduation.SignalR
 
             if (await _unitOfWork.Complete())
             {
-                await Clients.Group(groupName).SendAsync("NewMessage", _mapper.Map<MessageDto>(message));
+                if (message.FileUrl == null && message.PhotoUrl != null)
+                {
+                    var edit = _mapper.Map<MessageDto>(message);
+                    edit.FileUrl = message.PhotoUrl;
+
+                    await Clients.Group(groupName).SendAsync("NewMessage", edit);
+
+                }
+                else 
+                    await Clients.Group(groupName).SendAsync("NewMessage", _mapper.Map<MessageDto>(message));
             }
         }
 
