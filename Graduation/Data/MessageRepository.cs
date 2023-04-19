@@ -24,22 +24,20 @@ namespace Graduation.Data
             _cloudinarySettings = cloudinarySettings;
             
         }
-
-        //*****************************************************
         public async Task<string> SaveFileAsync(IFormFile file)
         {
             var fileService = new FileService(_cloudinarySettings);
 
             var extension = GetFileExtension(file);
-            if (extension.Result.ToString().ToLower() == ".jpg"
-                || extension.Result.ToString().ToLower() == ".png"
-                 || extension.Result.ToString().ToLower() == ".gif")
+            if (extension.ToString().ToLower() == ".jpg"
+                || extension.ToString().ToLower() == ".png"
+                 || extension.ToString().ToLower() == ".gif")
             {
                 var photoService = new PhotoService(_cloudinarySettings);
                 ImageUploadResult uploadResult0 = await photoService.AddPhotoAsync(file);
                 return uploadResult0?.SecureUrl?.AbsoluteUri;
             }
-            else if(extension.Result.ToString().ToLower() == ".ogg")
+            else if(extension.ToString().ToLower() == ".ogg")
             {
                 VideoUploadResult uploadResult1 = await fileService.AddOggFileAsync(file);
                 return uploadResult1?.SecureUrl?.AbsoluteUri;
@@ -49,27 +47,12 @@ namespace Graduation.Data
             return uploadResult2?.SecureUrl?.AbsoluteUri;
 
         }
-        //----------------------------------------------------
-        //public async Task<string> SaveFileAsync(IFormFile file)
-        //{
-        //    var fileService = new FileService(_cloudinarySettings);
-        //    var uploadResult = await fileService.AddOggFileAsync(file);
-        //    return uploadResult?.SecureUrl?.AbsoluteUri;
-        //}
-
-
-        //******************************************************
-
-
-
-
-
 
         public async Task<IEnumerable<GalleryDto>> GetPhotoGallery(string currentUserName, string recipientUserName)
         {
             var messages = await _context.Messages
-               .Include(u => u.Sender).ThenInclude(p => p.Photos)
-               .Include(u => u.Recipient).ThenInclude(p => p.Photos)
+               //.Include(u => u.Sender).ThenInclude(p => p.Photos)
+               //.Include(u => u.Recipient).ThenInclude(p => p.Photos)
                .Where(
                    m => m.RecipientUsername == currentUserName && m.RecipientDeleted == false &&
                    m.SenderUsername == recipientUserName ||
@@ -77,30 +60,17 @@ namespace Graduation.Data
                    m.SenderUsername == currentUserName
                )
                .OrderBy(m => m.MessageSent)
+               .ProjectTo<GalleryDto>(_mapper.ConfigurationProvider)
                .ToListAsync();
-            var unreadMessages = messages.Where(m => m.DateRead == null
-                && m.RecipientUsername == currentUserName).ToList();
 
-            if (unreadMessages.Any())
-            {
-                foreach (var message in unreadMessages)
-                {
-                    message.DateRead = DateTime.UtcNow;
-                }
-
-                await _context.SaveChangesAsync();
-            }
-
-            return _mapper.Map<IEnumerable<GalleryDto>>(messages);
-            
+            //return _mapper.Map<IEnumerable<GalleryDto>>(messages);
+            return messages;
 
         }
 
         public async Task<IEnumerable<MessageDto>> GetMessageThread(string currentUserName, string recipientUserName)
         {
             var messages = await _context.Messages
-                .Include(u => u.Sender).ThenInclude(p => p.Photos)
-                .Include(u => u.Recipient).ThenInclude(p => p.Photos)
                 .Where(
                     m => m.RecipientUsername == currentUserName && m.RecipientDeleted == false &&
                     m.SenderUsername == recipientUserName ||
@@ -108,6 +78,7 @@ namespace Graduation.Data
                     m.SenderUsername == currentUserName
                 )
                 .OrderBy(m => m.MessageSent)
+                .ProjectTo<MessageDto>(_mapper.ConfigurationProvider)
                 .ToListAsync();
 
             var unreadMessages = messages.Where(m => m.DateRead == null
@@ -123,7 +94,8 @@ namespace Graduation.Data
                 await _context.SaveChangesAsync();
             }
 
-            return _mapper.Map<IEnumerable<MessageDto>>(messages);
+            return messages;
+
         }
 
         public void AddGroup(Group group)
@@ -188,19 +160,16 @@ namespace Graduation.Data
                 .CreateAsync(messages, messageParams.PageNumber, messageParams.PageSize);
         }
 
-     
-
         public void RemoveConnection(Connection connection)
         {
             _context.Connections.Remove(connection);
         }
-
-        public async Task<bool> SaveAllAsync()
-        {
-            return await _context.SaveChangesAsync() > 0;
-        }
-
-        private async Task<string> GetFileExtension(IFormFile file)
+        //public async Task<bool> SaveAllAsync()
+        //{
+        //    return await _context.SaveChangesAsync() > 0;
+        //}
+        
+        public string GetFileExtension(IFormFile file)
         {
             var extension = Path.GetExtension(file.FileName);
             return extension;

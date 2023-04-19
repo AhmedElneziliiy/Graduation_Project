@@ -10,19 +10,15 @@ namespace Graduation.Controllers
 {
     public class MessagesController : BaseApiController
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IMessageRepository _messageRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IPhotoService _photoService;
-        public MessagesController(IUserRepository userRepository, IMessageRepository messageRepository,
-            IMapper mapper, IPhotoService photoService)
+        public MessagesController(IMapper mapper, IPhotoService photoService, IUnitOfWork unitOfWork)
         {
             _mapper = mapper;
-            _messageRepository = messageRepository;
-            _userRepository = userRepository;
             _photoService = photoService;
+            _unitOfWork = unitOfWork;
         }
-
 
         [HttpPost]
         public async Task<ActionResult<MessageDto>> CreateMessage([FromForm] CreateMessageDto createMessageDto)
@@ -31,13 +27,13 @@ namespace Graduation.Controllers
 
             if (username == createMessageDto.RecipientUsername.ToLower())
                 return BadRequest("You cannot send messages to yourself");
+            
 
+            var sender = await _unitOfWork.UserRepository.GetUserByUsernameAsync(username);
 
-            var sender = await _userRepository.GetUserByUsernameAsync("khaled");
+            var recipient = await _unitOfWork.UserRepository.GetUserByUsernameAsync(createMessageDto.RecipientUsername);
 
-            var recipient = await _userRepository.GetUserByUsernameAsync(createMessageDto.RecipientUsername);
-
-            if (recipient == null) return NotFound();
+            if (recipient == null) return NotFound("there is not user name with that name");
 
             var message = new Message();
 
@@ -47,23 +43,25 @@ namespace Graduation.Controllers
 
             if (createMessageDto.File != null)
             {
-                fileUrl = await _messageRepository.SaveFileAsync(createMessageDto.File);
+                fileUrl = await _unitOfWork.MessageRepository.SaveFileAsync(createMessageDto.File);
 
                 if (fileUrl == null)
                 {
                     return BadRequest("Failed to upload the file");
                 }
-                //-------------------------------------------------------------تمام  
+               
+                var extension = _unitOfWork.MessageRepository.GetFileExtension(createMessageDto.File);
 
-                var extension = GetFileExtension(createMessageDto.File);
-                if (extension.Result.ToString().ToLower() == ".jpg"
-                    || extension.Result.ToString().ToLower() == ".png"
-                     || extension.Result.ToString().ToLower() == ".gif")
+                if (extension.ToString().ToLower() == ".jpg"
+                    || extension.ToString().ToLower() == ".png"
+                     || extension.ToString().ToLower() == ".gif")
                 {
                     message.PhotoUrl = fileUrl;
                 }
                 else
+                {
                     message.FileUrl = fileUrl;
+                }
 
             }
             message.Sender = sender;
@@ -73,19 +71,19 @@ namespace Graduation.Controllers
             message.Content = createMessageDto.Content;
 
 
-            _messageRepository.AddMessage(message);
+            _unitOfWork.MessageRepository.AddMessage(message);
 
 
             if (message.FileUrl == null && message.PhotoUrl != null)
             {
                 var v = _mapper.Map<MessageDto>(message);
                 v.FileUrl = message.PhotoUrl;
-                if (await _messageRepository.SaveAllAsync())
+                if (await _unitOfWork.Complete())
                     return Ok(v);
 
             }
 
-            if (await _messageRepository.SaveAllAsync())
+            if (await _unitOfWork.Complete())
             {
                 return Ok(_mapper.Map<MessageDto>(message));
             }
@@ -93,15 +91,16 @@ namespace Graduation.Controllers
             return BadRequest("Failed to send message");
         }
 
-
         [HttpGet("gallery/{username}")]
         public async Task<ActionResult<IEnumerable<string>>> GetGallery(string username)
         {
-            var sender = await _userRepository.GetUserByUsernameAsync("khaled");
-            //****************************************************
-            var x = await _userRepository.GetUserByUsernameAsync(username);
+            var currentUsername = User.GetUsername();
 
-            var result= await _messageRepository.GetPhotoGallery(sender.UserName, x.UserName);
+            var reciever = await _unitOfWork.UserRepository.GetUserByUsernameAsync(username.ToLower());
+            if (reciever == null)
+                return NotFound("there is not user name with that name");
+
+            var result= await _unitOfWork.MessageRepository.GetPhotoGallery(currentUsername, username.ToLower());
 
             List<string> y = new List<string>();
             foreach (var item in result)
@@ -116,96 +115,13 @@ namespace Graduation.Controllers
 
         }
 
-       
-
-
-        //[HttpPost]
-        //public async Task<ActionResult<MessageDto>> CreateMessage([FromForm]CreateMessageDto createMessageDto)
-        //{
-        //    var username = User.GetUsername();
-
-        //    if (username == createMessageDto.RecipientUsername.ToLower())
-        //        return BadRequest("You cannot send messages to yourself");
-
-        //    var sender = await _userRepository.GetUserByUsernameAsync("khaled");
-
-        //    var recipient = await _userRepository.GetUserByUsernameAsync(createMessageDto.RecipientUsername);
-
-        //    if (recipient == null) return NotFound();
-
-        //    var message = new Message();
-
-        //    string fileUrl = null;
-
-
-        //    if (createMessageDto.File != null)
-        //    {
-        //        fileUrl = await _messageRepository.SaveFileAsync(createMessageDto.File);
-        //        if (fileUrl == null)
-        //        {
-        //            return BadRequest("Failed to upload the file");
-        //        }
-
-        //        message.FileUrl = fileUrl;                      // Set the uploaded file's URL;
-
-        //    } 
-        //     message.Sender = sender;
-        //     message.Recipient = recipient;
-        //     message.SenderUsername = sender.UserName;
-        //     message.RecipientUsername = recipient.UserName;
-        //     message.Content = createMessageDto.Content;
-
-
-        //    _messageRepository.AddMessage(message);
-
-        //    if (await _messageRepository.SaveAllAsync())
-        //        return Ok(_mapper.Map<MessageDto>(message));
-
-        //    return BadRequest("Failed to send message");
-        //}
-
-        //[HttpPost]
-        //public async Task<ActionResult<MessageDto>> CreateMessage([FromForm] CreateMessageDto createMessageDto)
-        //{
-
-
-        //    var username = User.GetUsername();
-
-        //    if (username == createMessageDto.RecipientUsername.ToLower())
-        //        return BadRequest("You cannot send messages to yourself");
-
-        //    var sender = await _userRepository.GetUserByUsernameAsync(username);
-        //    var recipient = await _userRepository.GetUserByUsernameAsync(createMessageDto.RecipientUsername);
-
-        //    if (recipient == null) return NotFound();
-
-
-
-        //    var message = new Message
-        //    {
-        //        Sender = sender,
-        //        Recipient = recipient,
-        //        SenderUsername = sender.UserName,
-        //        RecipientUsername = recipient.UserName,
-        //        Content = createMessageDto.Content,
-        //    };
-
-        //    _messageRepository.AddMessage(message);
-
-        //    if (await _messageRepository.SaveAllAsync()) 
-        //        return Ok(_mapper.Map<MessageDto>(message));
-
-
-        //    return BadRequest("Failed to send message");
-        //}
-
         [HttpGet]
         public async Task<ActionResult<PagedList<MessageDto>>> GetMessagesForUser([FromQuery]
             MessageParams messageParams)
         {
             messageParams.Username = User.GetUsername();
 
-            var messages = await _messageRepository.GetMessagesForUser(messageParams);
+            var messages = await _unitOfWork.MessageRepository.GetMessagesForUser(messageParams);
 
             Response.AddPaginationHeader(new PaginationHeader(messages.CurrentPage, messages.PageSize,
                 messages.TotalCount, messages.TotalPages));
@@ -213,36 +129,23 @@ namespace Graduation.Controllers
             return messages;
         }
 
-
-
         [HttpGet("thread/{username}")]
         public async Task<ActionResult<IEnumerable<MessageDto>>> GetMessageThread(string username)
         {
 
             var currentUsername = User.GetUsername();
-            //****************************************************
-            var x=await _userRepository.GetUserByUsernameAsync(username);
-            if (x == null)
-                return BadRequest("this username is not correct");
-            //*****************************************************
-            return Ok(await _messageRepository.GetMessageThread(currentUsername, username));
+            var reciver=await _unitOfWork.UserRepository.GetUserByUsernameAsync(username.ToLower());
+            if (reciver == null)
+                return NotFound("there is not user name with that name");
+            return Ok(await _unitOfWork.MessageRepository.GetMessageThread(currentUsername, username.ToLower()));
         }
-
-        //[HttpGet("thread/{username}")]
-        //public async Task<ActionResult<IEnumerable<MessageDto>>> GetMessageThread(string username)
-        //{
-
-        //    //var currentUsername = User.GetUsername();
-
-        //    return Ok(await _messageRepository.GetMessageThread("khaled", username));
-        //}
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteMessage(int id)
         {
             var username = User.GetUsername();
 
-            var message = await _messageRepository.GetMessage(id);
+            var message = await _unitOfWork.MessageRepository.GetMessage(id);
 
             if (message.SenderUsername != username && message.RecipientUsername != username)
                 return Unauthorized();
@@ -252,24 +155,14 @@ namespace Graduation.Controllers
 
             if (message.SenderDeleted && message.RecipientDeleted)
             {
-                _messageRepository.DeleteMessage(message);
+                _unitOfWork.MessageRepository.DeleteMessage(message);
             }
 
-            if (await _messageRepository.SaveAllAsync()) return Ok();
+            if (await _unitOfWork.Complete()) return Ok();
 
             return BadRequest("Problem deleting the message");
 
         }
-
-
-
-
-        private async Task<string> GetFileExtension(IFormFile file)
-        {
-            var extension = Path.GetExtension(file.FileName);
-            return extension;
-        }
-
 
     }
 }

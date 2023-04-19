@@ -29,6 +29,7 @@ namespace Graduation.Helpers
                 DateTime.SpecifyKind(d.Value, DateTimeKind.Utc) : null);
 
             CreateMap<GalleryDto, Message>().ReverseMap();
+            CreateMap<GalleryDto, MessageDto>().ReverseMap();
 
         }
     }

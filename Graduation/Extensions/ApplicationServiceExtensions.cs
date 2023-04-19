@@ -17,12 +17,11 @@ namespace Graduation.Extensions
 
             
             services.AddScoped<ITokenService, TokenService>();
-            services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IPhotoService, PhotoService>();
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<LogUserActivity>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-            services.AddScoped<IMessageRepository, MessageRepository>();
             services.AddSignalR();
             services.AddSingleton<PresenceTracker>();
 
