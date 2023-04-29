@@ -20,8 +20,11 @@ namespace Graduation.Extensions
             services.AddScoped<IPhotoService, PhotoService>();
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<LogUserActivity>();
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+            services.AddScoped<IEncryptionService, EncryptionService>();
+
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            
             services.AddSignalR();
             services.AddSingleton<PresenceTracker>();
 

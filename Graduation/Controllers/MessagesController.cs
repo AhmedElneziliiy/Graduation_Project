@@ -5,6 +5,7 @@ using Graduation.Extensions;
 using Graduation.Helpers;
 using Graduation.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Cryptography;
 
 namespace Graduation.Controllers
 {
@@ -13,17 +14,21 @@ namespace Graduation.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IPhotoService _photoService;
-        public MessagesController(IMapper mapper, IPhotoService photoService, IUnitOfWork unitOfWork)
+        private readonly IEncryptionService _encryptionService;
+
+        public MessagesController(IMapper mapper, IPhotoService photoService, IUnitOfWork unitOfWork, IEncryptionService encryptiomService)
         {
             _mapper = mapper;
             _photoService = photoService;
             _unitOfWork = unitOfWork;
+            _encryptionService = encryptiomService;
         }
 
         [HttpPost]
         public async Task<ActionResult<MessageDto>> CreateMessage([FromForm] CreateMessageDto createMessageDto)
         {
             var username = User.GetUsername();
+            
 
             if (username == createMessageDto.RecipientUsername.ToLower())
                 return BadRequest("You cannot send messages to yourself");
@@ -162,6 +167,27 @@ namespace Graduation.Controllers
 
             return BadRequest("Problem deleting the message");
 
+        }
+
+        [HttpPost("encrypt/{plaintText}")]
+        public async Task<ActionResult> EncryptDecrypt(string plaintText)
+        {
+            byte[] key = new byte[16];
+            byte[] iv = new byte[16];
+
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(key);
+                rng.GetBytes(iv);
+            }
+
+            byte[] encryptedPassword = await _encryptionService.Encrypt(plaintText, key, iv);
+
+            string encryptedPasswordString = Convert.ToBase64String(encryptedPassword);
+
+            string decryptedPassword = await _encryptionService.Decrypt(encryptedPassword, key, iv);
+
+            return Ok(new { Encrypt = encryptedPasswordString, Decrypt = decryptedPassword });
         }
 
     }
