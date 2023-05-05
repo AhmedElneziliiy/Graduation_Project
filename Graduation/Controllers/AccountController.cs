@@ -2,7 +2,6 @@
 using Graduation.DTOs;
 using Graduation.Entities;
 using Graduation.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +21,7 @@ namespace Graduation.Controllers
         }
 
         [HttpPost("register")] // POST: api/account/register?username=dave&password=pwd
-        public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
+        public async Task<ActionResult<UserRegisterDto>> Register(RegisterDto registerDto)
         {
             if (await UserExists(registerDto.Username)) return BadRequest("Username is taken");
 
@@ -38,18 +37,19 @@ namespace Graduation.Controllers
             
             if (!roleResult.Succeeded) return BadRequest(result.Errors);
 
-            return new UserDto
+            return new UserRegisterDto
             {
                 Username = user.UserName,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
                 Token = await _tokenService.CreateToken(user),
-                KnownAs = user.KnownAs,
                 Gender = user.Gender
             };
         }
 
 
         [HttpPost("login")]
-        public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
+        public async Task<ActionResult<UserLoginDto>> Login(LoginDto loginDto)
         {
             var user = await _userManager.Users
                 .Include(p => p.Photos)
@@ -61,12 +61,13 @@ namespace Graduation.Controllers
 
             if (!result) return Unauthorized("Invalid username or password");
 
-            return new UserDto
+            return new UserLoginDto
             {
                 Username = user.UserName,
+                FirstName= user.FirstName,
+                LastName= user.LastName,
                 Token = await _tokenService.CreateToken(user),
                 PhotoUrl = user.Photos.FirstOrDefault(x => x.IsMain)?.Url,
-                KnownAs = user.KnownAs,
                 Gender = user.Gender
             };
         }

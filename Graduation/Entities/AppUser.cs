@@ -4,6 +4,11 @@ namespace Graduation.Entities
 {
     public class AppUser: IdentityUser<int>
     {
+
+        public string Location { get; set; }
+
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
         public DateTime DateOfBirth { get; set; }
         public string KnownAs { get; set; }
         public DateTime Created { get; set; } = DateTime.Now;

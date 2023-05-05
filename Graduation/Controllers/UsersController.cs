@@ -36,7 +36,7 @@ namespace Graduation.Controllers
             return await _unitOfWork.UserRepository.GetMemberAsync(username);
         }
 
-        [HttpPut]
+        [HttpPut("update-location")]
         public async Task<ActionResult> UpdateUser(MemberUpdateDto memberUpdateDto)
         {
             var user = await _unitOfWork.UserRepository.GetUserByUsernameAsync(User.GetUsername());
@@ -48,6 +48,17 @@ namespace Graduation.Controllers
             if (await _unitOfWork.Complete()) return NoContent();
 
             return BadRequest("Failed to update user");
+        }
+
+        [HttpGet("get-location/{username}")]
+        public async Task<ActionResult> GetUserLocation(string username)
+        {
+            var user =await _unitOfWork.UserRepository.GetUserByUsernameAsync(username);
+            
+            if (user == null) return NotFound();
+
+
+            return Ok(user.Location);
         }
 
         [HttpPost("add-photo")]
@@ -125,5 +136,7 @@ namespace Graduation.Controllers
 
             return BadRequest("Problem deleting photo");
         }
+
+
     }
 }

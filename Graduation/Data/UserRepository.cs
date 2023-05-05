@@ -55,5 +55,6 @@ namespace Graduation.Data
         {
             _context.Entry(user).State = EntityState.Modified;
         }
+
     }
 }
